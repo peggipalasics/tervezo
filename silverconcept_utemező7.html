@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Silver Concept Kft. – Kivitelezés ütemező</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f2f2f2;
+    --surface: #ffffff;
+    --border: #d0d0d0;
+    --border-light: #e4e4e4;
+    --text: #3d3d3d;
+    --text-muted: #6b6b6b;
+    --text-hint: #a0a0a0;
+    --brand-teal: #4ec8d4;
+    --brand-teal-dark: #2ea8b4;
+    --brand-gray: #5a5a5a;
+    --brand-lightgray: #d8d8d8;
+    --accent: #4ec8d4;
+    --accent-bg: #eef9fa;
+    --accent-border: #b2e8ec;
+    --person-bg: #e8e8e8;
+    --person-border: #c0c0c0;
+    --person-text: #3d3d3d;
+    --ext-person-bg: #c8c8c8;
+    --ext-person-border: #999999;
+    --ext-person-text: #1a1a1a;
+    --car-bg: #c8edf0;
+    --car-border: #7fd4dc;
+    --car-text: #1a5a60;
+    --ext-car-bg: #7ecdd5;
+    --ext-car-border: #3dabb5;
+    --ext-car-text: #0a3a40;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-tap-highlight-color: transparent; }
+
+  /* Top header bar */
+  .topbar {
+    background: #2c2c2c;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    height: 52px;
+    border-bottom: 3px solid var(--brand-teal);
+  }
+  .topbar-logo {
+    height: 34px;
+    width: auto;
+    display: block;
+    flex-shrink: 0;
+  }
+  .topbar-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #d8d8d8;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .topbar-title strong {
+    color: var(--brand-teal);
+    font-weight: 600;
+  }
+
+  /* Main content */
+  .content { padding: 12px; }
+
+  .header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .date-bar { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .date-nav { display: flex; align-items: center; gap: 2px; }
+  .date-nav button {
+    width: 34px; height: 34px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .date-nav button:hover { background: var(--accent-bg); border-color: var(--accent); }
+  .date-nav button:active { background: #d0f0f3; }
+  .date-label { font-size: 13px; font-weight: 600; min-width: 130px; text-align: center; color: var(--text); }
+  input[type="date"] {
+    height: 34px; font-size: 12px; padding: 0 8px;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); color: var(--text);
+    font-family: inherit; outline: none; cursor: pointer;
+    transition: border-color 0.12s;
+  }
+  input[type="date"]:focus { border-color: var(--accent); }
+  .day-badge {
+    font-size: 11px; font-weight: 600; padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--accent-bg); color: var(--brand-teal-dark);
+    border: 1px solid var(--accent-border);
+    white-space: nowrap;
+  }
+  .day-badge.weekend { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+
+  .top-right { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; width: 100%; margin-top: 4px; }
+  .job-input {
+    flex: 1; min-width: 130px; height: 36px; font-size: 13px; padding: 0 10px;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); color: var(--text);
+    font-family: inherit; outline: none;
+    transition: border-color 0.12s;
+  }
+  .job-input:focus { border-color: var(--accent); }
+  .btn {
+    height: 36px; padding: 0 14px; font-size: 13px; font-weight: 500;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); color: var(--text);
+    cursor: pointer; white-space: nowrap; font-family: inherit;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .btn:hover { background: var(--accent-bg); border-color: var(--accent); }
+  .btn.primary { background: var(--brand-teal); color: #fff; border-color: var(--brand-teal-dark); }
+  .btn.primary:hover { background: var(--brand-teal-dark); }
+  .btn.ghost { color: var(--text-muted); }
+
+  .status-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 11px; color: var(--text-hint); }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #d1d5db; }
+  .status-dot.connected { background: #22c55e; }
+  .status-dot.saving { background: #f59e0b; }
+
+  .mobile-hint {
+    background: var(--accent-bg); border: 1px solid var(--accent-border);
+    border-radius: var(--radius); padding: 8px 12px;
+    font-size: 12px; color: var(--brand-teal-dark); margin-bottom: 8px; display: none;
+  }
+  @media (pointer: coarse) { .mobile-hint { display: block; } }
+
+  .selected-bar {
+    background: #fefce8; border: 1px solid #fde047; border-radius: var(--radius);
+    padding: 8px 12px; font-size: 12px; color: #713f12;
+    margin-bottom: 8px; display: none; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .selected-bar.visible { display: flex; }
+  .selected-bar strong { font-weight: 600; }
+  .selected-bar button {
+    height: 26px; padding: 0 10px; font-size: 11px;
+    border: 1px solid #fbbf24; border-radius: 6px;
+    background: #fff; color: #92400e; cursor: pointer; font-family: inherit;
+  }
+
+  .layout { display: flex; gap: 10px; align-items: flex-start; }
+  .sidebar {
+    flex: 0 0 152px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 10px;
+  }
+  @media (max-width: 600px) { .sidebar { flex: 0 0 118px; } }
+  .pool-section { margin-bottom: 8px; }
+  .pool-section:last-child { margin-bottom: 0; }
+  .pool-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--text-hint); margin-bottom: 4px;
+  }
+  .pool {
+    display: flex; flex-wrap: wrap; gap: 3px;
+    min-height: 28px; padding: 4px;
+    border: 1.5px dashed var(--border-light); border-radius: var(--radius);
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .pool.drop-target { background: var(--accent-bg); border-color: var(--accent); border-style: solid; }
+  .pool.drag-over   { background: var(--accent-bg); border-color: var(--accent); }
+  .divider { height: 1px; background: var(--border-light); margin: 7px 0; }
+
+  .add-ext-btn {
+    width: 100%; height: 27px; font-size: 11px; border-radius: 6px;
+    cursor: pointer; font-family: inherit; margin-top: 4px;
+    font-weight: 500; transition: opacity 0.12s;
+  }
+  .add-ext-btn:hover { opacity: 0.8; }
+  .add-ext-btn.person { border: 1px dashed var(--ext-person-border); background: var(--ext-person-bg); color: var(--ext-person-text); }
+  .add-ext-btn.car    { border: 1px dashed var(--ext-car-border);    background: var(--ext-car-bg);    color: var(--ext-car-text); }
+
+  .main { flex: 1; overflow-x: auto; }
+  .board { display: flex; gap: 8px; padding-bottom: 8px; align-items: flex-start; }
+  .col { flex: 0 0 138px; display: flex; flex-direction: column; gap: 4px; }
+  @media (max-width: 600px) { .col { flex: 0 0 115px; } }
+
+  .col-header {
+    font-size: 11px; font-weight: 700; text-align: center;
+    padding: 7px 18px 5px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--brand-teal);
+    border-radius: var(--radius);
+    color: var(--text); min-height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    word-break: break-word; line-height: 1.3;
+    position: relative; box-shadow: var(--shadow);
+  }
+  .del-col {
+    position: absolute; top: 3px; right: 3px;
+    font-size: 10px; cursor: pointer; color: var(--text-hint);
+    display: none; width: 14px; height: 14px;
+    align-items: center; justify-content: center; border-radius: 3px;
+  }
+  .col-header:hover .del-col { display: flex; }
+  .del-col:hover { background: #fee2e2; color: #b91c1c; }
+  .note-btn {
+    position: absolute; top: 3px; left: 3px; font-size: 10px; cursor: pointer;
+    color: var(--text-hint); display: flex; width: 14px; height: 14px;
+    align-items: center; justify-content: center; border-radius: 3px;
+  }
+  .note-btn:hover { background: #fef9c3; color: #854d0e; }
+  .note-btn.has-note { color: #ca8a04; }
+
+  .note-box { background: #fefce8; border: 1px solid #fde047; border-radius: var(--radius); padding: 5px 6px; }
+  .note-box textarea {
+    width: 100%; background: transparent; border: none; outline: none;
+    font-family: inherit; font-size: 11px; color: #713f12;
+    resize: none; min-height: 44px; line-height: 1.4;
+  }
+  .note-box textarea::placeholder { color: #a16207; opacity: 0.6; }
+
+  .drop-zone {
+    min-height: 180px; border: 1.5px dashed var(--border-light);
+    border-radius: var(--radius); padding: 4px;
+    display: flex; flex-direction: column; gap: 3px;
+    transition: background 0.12s, border-color 0.12s;
+    background: rgba(255,255,255,0.6);
+  }
+  .drop-zone.drop-target { background: var(--accent-bg); border-color: var(--accent); border-style: solid; }
+  .drop-zone.drag-over   { background: var(--accent-bg); border-color: var(--accent); }
+
+  .card {
+    padding: 5px 7px; border-radius: 6px; font-size: 11px; font-weight: 500;
+    cursor: pointer; user-select: none; border: 1px solid transparent;
+    text-align: center;
+    transition: box-shadow 0.12s, transform 0.1s, opacity 0.12s;
+    box-shadow: var(--shadow);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  }
+  .card:active { transform: scale(0.96); }
+  .card.dragging { opacity: 0.3; }
+  .card.selected { outline: 2.5px solid var(--brand-teal); outline-offset: 1px; transform: scale(1.05); box-shadow: 0 4px 12px rgba(78,200,212,0.3); }
+  .card.person     { background: var(--person-bg);     color: var(--person-text);     border-color: var(--person-border); }
+  .card.ext-person { background: var(--ext-person-bg); color: var(--ext-person-text); border-color: var(--ext-person-border); }
+  .card.car        { background: var(--car-bg);        color: var(--car-text);        border-color: var(--car-border); }
+  .card.ext-car    { background: var(--ext-car-bg);    color: var(--ext-car-text);    border-color: var(--ext-car-border); }
+
+  .card-wrap { position: relative; display: inline-flex; align-items: center; max-width: 100%; }
+  .card-wrap .card { padding-right: 18px; }
+  .card-del {
+    position: absolute; right: 3px; top: 50%; transform: translateY(-50%);
+    width: 13px; height: 13px; border-radius: 50%;
+    background: rgba(0,0,0,0.18); color: inherit;
+    font-size: 9px; line-height: 13px; text-align: center;
+    cursor: pointer; display: none; font-weight: 700; border: none; padding: 0;
+  }
+  .card-wrap:hover .card-del { display: block; }
+  @media (pointer: coarse) { .card-del { display: block !important; } }
+  .card-del:hover { background: #ef4444; color: #fff; }
+
+  .legend { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 3px; font-size: 10px; color: var(--text-muted); }
+  .legend-dot { width: 9px; height: 9px; border-radius: 3px; border: 1px solid transparent; flex-shrink: 0; }
+
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+    display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px;
+  }
+  .modal-backdrop.hidden { display: none; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-top: 3px solid var(--brand-teal);
+    border-radius: var(--radius-lg); padding: 20px;
+    width: 100%; max-width: 300px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+  .modal h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+  .modal input {
+    width: 100%; height: 40px; font-size: 14px; padding: 0 10px;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--bg); color: var(--text);
+    font-family: inherit; outline: none; margin-bottom: 12px;
+    transition: border-color 0.12s;
+  }
+  .modal input:focus { border-color: var(--accent); }
+  .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+
+  .empty-day { text-align: center; color: var(--text-hint); font-size: 12px; padding: 40px 16px; width: 100%; }
+  .loading-overlay {
+    position: fixed; inset: 0; background: rgba(242,242,242,0.94);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; z-index: 100; font-size: 13px; color: var(--text-muted);
+  }
+  .spinner {
+    width: 26px; height: 26px;
+    border: 2px solid var(--border);
+    border-top-color: var(--brand-teal);
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <span>Csatlakozás az adatbázishoz…</span>
+</div>
+
+<!-- Modals -->
+<div class="modal-backdrop hidden" id="modal-ext-person">
+  <div class="modal">
+    <h3>Külső kolléga hozzáadása</h3>
+    <input id="ext-person-name" placeholder="Név…" maxlength="30" />
+    <div class="modal-btns">
+      <button class="btn ghost" id="btn-cancel-ext-person">Mégse</button>
+      <button class="btn primary" id="btn-confirm-ext-person">Hozzáadás</button>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop hidden" id="modal-ext-car">
+  <div class="modal">
+    <h3>Külső autó hozzáadása</h3>
+    <input id="ext-car-plate" placeholder="Rendszám…" maxlength="12" />
+    <div class="modal-btns">
+      <button class="btn ghost" id="btn-cancel-ext-car">Mégse</button>
+      <button class="btn primary" id="btn-confirm-ext-car">Hozzáadás</button>
+    </div>
+  </div>
+</div>
+
+<!-- Top brand bar -->
+<div class="topbar">
+  <img class="topbar-logo" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAGdA+gDASIAAhEBAxEB/8QAHQABAAIDAQEBAQAAAAAAAAAAAAYHBAUIAwIJAf/EAFIQAAEDAgIFBgYNCgQGAgMAAAABAgMEBQYRBxIhMUETUWFxgZEiNnShsbIIFCMyNUJSYnOCk8HSFRc0VHKSs8LR8BYkQ6IzU1WD4fEYRCV1lP/EABsBAQACAwEBAAAAAAAAAAAAAAABBQIDBAYH/8QALhEBAAICAQICBwkBAAAAAAAAAAECAwQRBRIhMRMiQVFhkaEGFEJScbHR4fAV/9oADAMBAAIRAxEAPwDjIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB70NJU11XHSUcD555FyYxiZqpbODdGlJRtZV37VqqjelOi+5s6/lL5usCtbFhy9Xt2VtoJZWZ5LKvgsT6y7OwnFp0TTuRH3S6sj546dmt/uXL0FqxRxxRtjiY1jGpk1rUyRE5kQ+gIVS6McMQoiStrKheeSbL1UQy/zeYQyy/JS9ftmX8RKgBCqvRjhiZFSJtZTrzxzZ+sikdu2iadrVfa7qyReEdQzV/3Jn6C1wBzhfcOXqyOyuVBLEzPJJU8Ji/WTZ2GpOo5Y45Y3Rysa9jkyc1yZoqcyoV5jLRpSVjX1dh1aWo3rTqvub+r5K+bqAp8HvXUlTQ1clJWQPgnjXJ7HpkqHgAAAAAAAAAAAA9aSmqKupjpqSCWonkXVZHExXOcvMiJtUsPRHoiv2PJG1r87bZGuyfWSMzWTLekbfjL07k6V2HVuAsA4XwTRpDY7cxkytykq5cnzy9b+boTJOg6cOrbJ4z4Qqt3q2LWntj1re7+XMmD9AOOr2xk9wip7HTO251bs5VTojbmqL0OVpZ9k9jThena1bvfLpXyJvSFGQMXsycvnL0B301MVfZy89m6xtZJ8LcR8FY02gbRjE1Eksc8688ldMir+65BU6BtGMrVSOxzwLzx10yqn7zlLOBt9Dj/ACw5fv2zzz6SfnKi737GnC9Q1y2i+XSgkXckyMnYnZk1fOVhjDQDjqyMfPb46e+UzdudI7KVE6Y3ZKq9DVcdhg1X1MVvZw6sPWNrHPjbmPi/OeroqikqZKarglp5411XxysVrmrzKi7UPI71x7gHC+NqNYb5bmPmRuUdXFkyeLqfzdC5p0HKWlzRFfsByOrWZ3KyOdkysjZksee5JG/FXp3L0LsODNq2x+MeMPQ6XVsWzPbPq2938K3ABzLUAAAAAAAAAM6w2i5367U9ps1DPXV1S/UhghbrOcv3JxVV2Im1QMEluAdG2NscyomGrBVVcOtquqnIkcDOfOR2Tc+hFVeg6e0L+xhs9njgu+kDkrtcdj225q500K8z1/1V6Pe70ydvOjKWnp6SmjpqWCKCCJqNjjjYjWsRNyIibEQjkcmYR9iJXSsZNivFkFMu91PboFkX7R+SIv1VLHtPsW9FtGxEqorxcnJvarodXP7NGl4ACpv/AI5aHNTV/wAJOz+V+UqrP+Iai7exb0W1jFSlivFtcu5aet1svtEcXgAOSMXexEromPmwpiyCpXe2nuMCxr9ozNFX6qFE4+0bY2wNKqYlsFVSQ62q2qaiSQP5spG5tz6FVF6D9LTzqqenq6aSmqoIp4JWq2SORiOa9F3oqLsVByPyoB2Xpo9jDZ7xHPd9H/JWm47Xutzlyppl5mL/AKS9HvdyZN3nIV+tFzsN2qLTeaGehrqZ+pNBM3Vc1fvTiipsVNqEjBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAybZQ1Vyr4aGiidLPM7VY1PT0J0mMXdopws2zWpLlVx/5+rYi7U2xRrtRvWu9exOAG0wPhOiw1Qpqo2aukb7tPl/tbzN9JIwAAAAAAAAAAAAjmOMJ0WJaFdZGw10bfcZ8v8Aa7nb6ChrnQ1Vtr5qGtidFPC7Ve1fT0p0nThCNK2Fm3m1LcqSP/P0jVXYm2WNNqt603p2pxApEAAAAAAAAuX2PmiN2L524ixBE+Owwv8AcotrVrHou1EXgxF3qm9dicVSI6F8Cz49xlDbna7LdTok1fK34saL71F+U5didq8Dt+30dLb6GChooI6emp40jiiYmTWNRMkREO3U1++e63ko+r9RnBHosc+tP0/t90sEFLTR01NDHDBE1GRxxtRrWNTYiImbEQ9AC0eSAASgAAAAADzqoIKqmkpqmGOaCVqskjkajmvauxUVF2Kh6AhLkf2QeiN2EJ3Yiw/E+SwzPyli2uWjeq7EVeLFXcvBdi8FWmj9FrhR0twoZ6GtgjqKaojWOWJ6Zte1UyVFQ4g00YFnwFjKa3N1326oRZqCV3xo1X3qr8pq7F7F4lXt6/ZPdXyet6R1Gc8eiyT60fX+0IABxLwAAAAAbPC9iuuJr/R2Ky0j6uvrJEjijbz8VVeCImaqq7ERFU7+0EaI7JoxsSIxsdZfkie3q9W7V48nHntbGi9q5ZrwRIt7ErRTHgvCbMTXimRMQXeJHZPb4VLTrtbGnM52xzuxPi7bzIAAEAAAAAAAAAVrp20R2TSdYlR7Y6O+0zF9o16N2px5OTLa5ir2pnmnFFsoAflviixXXDN/rLFeqR9JX0cixyxu5+CovFFTJUVNioqKaw7o9lroqjxphN+JbPTIuILRErsmN8Kqp02ujXnc3a5vanHZwuZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACVaMLGl7xREkzNalpU5aZF3OyXwW9q+ZFL7ILoWtqUmFnVzm5SVsquz+Y3wUTv1l7SdAAAAAAAAAAAAAAAAAUJpPsaWTFEqQs1aWqTloUTc3NfCb2L5lQipdemm2pV4WbXNbnJRSo7P5jvBVO/VXsKUAAAAASvRFh9uJ9JFks8jNeCWpR86ZbFiYivenajVTtJrE2mIhhkvGOk3nyh1X7HjBzcI6O6RZ4kbcbkiVdWqptTWTwGfVbls51cWOAX9KxSsVh89zZbZsk5LecgAMmoAAAAAAAAAAArj2Q+Dm4u0d1awRa1xtqLV0iom1dVPDZ9ZueznRpY4Mb1i9ZrLbhy2w5IyV84fnECV6XMPtwxpIvdnjZqQRVKvgTgkT0R7E7GuROwihQWiazxL6FjvGSkXjykABDMLY9ixgNmOdKdKlbCklqtSJXViOTNr9VU5ONf2nZZpxajipzuH2EOGG2jRRLfpI8qm+VbpEdlt5GJVjYn7ySL9YC+gAYgAAAAAAAAAAAAAH5+eynwGzA2lOqSihSK1XVFrqNGpk1msq8pGn7Ls8k4NVp+gZQvs3sMNu+iiK/Rx51Njq2yK7LbyMqpG9P3ljX6pI4eABIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOk8K0qUWGrbSomSx00aO69VM/PmbI+Y2oyNrE3NREQ+gAAAAAAAAAAAAAAAANbimlStw1cqVUzWSmkRvXqrl58jmw6jkaj43MXc5FRTlwAAABd/sOrc2ox/cri9uaUdvVrehz3tTPua5O0pA6L9hSxqz4rkXLWa2kanUqzf0Q36sc5YV/Vbdupef8AeMukgAXbwoAAAAAAAAAAAAAAADlH2YtubT4/ttxY3JKy3o13S5j3Jn3OanYUgdF+zWY1J8KSJlrObVtXqRYf6qc6FJtRxll7rpVptqUmf94gANCwD9NdE9qbZNGWGbU1uqtPa6dr0y3v5NFcva5VU/Mo/VemjbDTRRMy1WMRqZcyIRI9AAQAAAAAAAAAAAAAARnSvam3zRliW1ObrLU2uoazofyaq1exyIpJj4qY2zU8sT8tV7FaufMqAflOADIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHT1umSot9NUIuaSxNenaiKe5HNGtclfgq3PzzdFHyDk5lYuqnmRF7SRgAAAAAAAAAAAAAAAAeFxmSnt9TUKuSRROeq9SKpzCdBaSq5KDBVxfrZOlj5Bqc6vXVXzKq9hz6AAAA6C9hdVNZe8SUWfhS00EqJ0Mc5P50OfS0vYuXhtq0uUUMj9WO4wS0blXdmqI9ve5jU7Tdr27ctZcPUsc5NW8R7v28XZYALx4MAAAAAAAAAAAAAAABzJ7NGqa+94bos/Cipp5VToe5qfyKc+lpeyjvDbtpcrYY360dugio2qm7NEV7u5z3J2FWlHsW7stpe86bj7NWkT7v38QAGl3B+pmHKxtxw9bbgxc21VJFMi86OYi/eflmfoj7GK/NxBoPw3Pr60tJTe0ZU4tWFVYiL9VGr2kSLKABAAAAAAAAAAAAAABgYjrG27D1yuD11W0tJLMq8yNYq/cZ5Wvsnb83D+g/Ek+vqy1dN7RiTPa5ZlRion1VcvYSPzuABIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALO0GXdGVFZZJX5JJ7vCi/KTY5O7JexS1zmWz19Ra7pT3CldlLA9Ht5l50XoVM07To2x3OmvFqp7jSOzimZrZcWrxavSi7AM0AAAAAAAAAAAAAAMK+XOms9qqLjVuyihZrZcXLwanSq7AK1053dH1FHZIn5pH7vMifKXY1O7Ne1CsTLvFfUXS6VFwqnZyzvV7uZOZE6ETJOwxAAAAGVaK+ptV2pLnRv1KiknZPE7mc1yOTzoYoCJiJjiX6F4WvNJiHDlvvdC7OnrYGzNTPPVzTa1elFzRelDZHNvsR8dtifNgW5TZI9zp7arl475Ik9ZPrdB0kXuHJGSkWeB3dadbNOOfL2foAA2uQAAAAAAAAAAA1uKbzSYew5cL3XOyp6KB0zkzy1sk2NTpVckTpU2Rzb7LjHbZHw4Fts2aMc2e5K1eO+OJfWX6vSas2SMdJs69LWnZzRjjy9v6OfrxX1N1u1Xc6x+vUVc755Xc7nOVy+dTFAKJ76IiI4gAASHUnsDcYsguF5wNVSo1KlPb9Eirve1EbK1OlWoxepjjls2+DMQ3DCmKrbiK1v1KugnbNHnudlvavQ5M2r0KoH6iA0mBMT2zGWErfiS0Sa9LWxI9GqvhRu3OY75zXIqL1G7MQAAAAAAAAAAAAADkj2eWMWT3CzYGpZUclMnt+tRF3PcitiavSjVevU9p05jvE9swbhK4Yku8mpS0USvVqL4UjtzWN+c5yoidZ+a2M8Q3DFeKrliK6P16uvndNJlubnuanQ1Mmp0IhMDUAAkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAmWjLFq4fr1pKxyrbahya/HknbtdOjn/APBDQB1HG9kkbZI3texyI5rmrmiou5UU+oiW6PseTWJW2+46897VXwVTa6Dq529HdzLc1BWVtfSMq6KCI+t+UrVzu9MlAuDFmky04XhW3VLmuuUrPf0jFycid8n7qc/SV7ctJuIa2VVo5oLez4kaRucna7LIv1TncE6iJHRrVNRzHuXVVzV2orVTuMfX2pxBqKr7SqY3bG0bvJX0gSDC+NrVib3B7lhqk3QVKJqr+y9OCtXu4l4FmHIeM8G0OKqPkahz4Z2tmgqGNy11XmXiip0LwoXLf9FLaZaprvZFdLIuyyRZMd25Kn1iMXiwW+7UiU1wpmTMauqjl2OavOi7UUDnUF6YP0oU1Yjae/RLSy8FqGNVY1fuIi+j61aVdSY8s7a6gcsNQ3a6PelqbWuTpRdncY9sstbZqpaSup3QzNTNFXem5U5lTgBggi2J9HduvTHyW6V1tmXarU8GOVe1FVWnMZVJimkuLH0V+hSnrW5tWsgVOSd15o5N+fT2oW0AXfNpMwsiZokhuj14ays1E7UVSwL5pMw9a43R2yiuVzkXJqpBG1jEX95y9+xFlAFRXTSZf6lyqySCiY3gxkS5+dVVTyj0mYjqHe6VtXIn7UrsneiJj8ZSwALjYmpFVXOvlc7gkEaJ5lzUsW2aSaKjXVW0UFLSouerFM1yxSN9ZuSc3Y5O5TnbSD4xVXl7/wCHGRHTZ44s8kZ6zi1cKYfosN26ShoZaiSOSZZVWZyK7NUROCJs8FDW4pwNacRXNLhW1FdHKkaR5QvajckVV4tXnAoMFz/mpw7+u3X7WP8AAQzSbhO3YYbb1oJqqX2ysmvy7mrlq6uWWTU+UoELAAAAAAAAAAHrSzyU1VFUxLlJE9HtXpRc0OkrNcKW82eCvp1a+GojzVq7cl4tXpRc0OaCR4KxbX4ZqV5JOXo5Fzlp3Lki9LV4KBtsc4AuFqqZau1QyVdvcquRrE1nw9CpvVOnvIOqKiqipkqHQNgxrh68takNcynnX/RqFRjs+ZM9i9iqZ93w9ZLuircLbTTuX/U1cn/vJkvnA5uBcl10VWefN1vrKmjcu5rspGJ2LkvnIhedGmIqFHPpWw18abfcXZPy/Zdl5swIUD1qqaopJ3QVUEsErffMkarXJ2KeQA6C0aeItr+iX1nHPp0Fo08RbX9EvrOApvSD463byhxoTfaQfHW7eUONCBbOgX9Buv0sfoca3Tv8M27yd3rGy0C/oN1+lj9DjW6d/hm3eTu9YCuo3vjkbIxyte1UVqpvRU4nRmFLpFf8NUtc5GuWWPVmblsR6bHJlzZ+ZTnEsnQfeuRr6mxzP8CoTloUX5aJ4Sdrdv1QIbjG0OseI6u3Ki8mx+tEq8WLtb5tnWimoLd04Wbl7dT3uFmb6ZeSmVPkOXwV7HbPrFRAAD0poZampip4GK+WV6MY1OKquSIBZug6y5uqr7Mzd7hBn3uX0J3nnpxvXKVNLYoX+DEnLz5fKXY1OxM17ULBtlNSYZwtHC9yNgoadXSvT4yombl7Vz7zn29V810utTcahfdKiRXqnNzJ1ImSdgHlQ0s9dWQ0dLGsk8z0YxqcVUvvBOFqHDNuTJGSVj251FQvnROZqf8AshOg2zslqqu9ysz5D3GDPg5UzcvXlkn1lNlppxDJSUkVipZFY+pbylQqLt5PPJG9qoufV0gfOLNJ8NLM+ksMEdU9q5OqJM+Tz+aibXdeaJ1kNm0hYtkfrJdOTTg1kEaIn+0ioAndo0oX+llb7fbBXxfGzYkb+xW7PMpZ1gvdnxZaZFgRsrFTVqKaVqK5ufBycU6TnY2mFr1U2C9QXGnVcmrlKzPZIxd7V/vfkBu9JWElw7XtqKRHOt1Q5eTVdqxu+Qq+j/wRA6NxBQU2JMLTUzFa9lVCkkD+Z2Wsx3o7DnN7XMerHIqOauSovBQJfof8eqX6KT1VLSx7Y5MQ2+htzXKyNa1j5np8ViNfmvXuROlUKt0P+PVL9FJ6ql23Osht9vqK6oXKKCN0jupEzA1F3u9hwbaYYZNWGNjdWCniTN78uZPSq95A6/SzXOkX2haaeNnBZ3ueq92RBL/dau9XWe41j1dJK7Y3PYxvBqdCGABtMT3uqxBdXXGsjhjlVjWasSKjck61U1YAAAAC09BFA3VuV0c3ws2wMXm+M7+UqwuzQmxGYNe5N76t7l7mp9wGr063NzKWgtEbsklcs8qdCbG+dV7kKnJzpskc/GLGruZSMane5fvIMAAAAAAAAALF0WYKjuTW3q7xa1Ijv8vC5Nkqp8ZfmpzcerfCsOW194vtHbWKqcvKjXKnBu9y9iIqnQ1fUUdhsMtQrEjpaKDwWN2bGpkjU8yAYOK8TWrDFG1ap2tK5vuNNHlrORPQnSVhdtJ+IaqRfaSU9BH8VGsR7u1XZovchE73c6u8XSe4Vr1fLK7PoanBqdCGEBKodIWLY36y3RJE4tfBHkv+0mGFtKMVRMymv1OynVy5JUQ56iftNXanWmfUVKAOicVYetmJ7Ykc6M5TV1qepZkqsz3Ki8WrzcfOUHe7bVWi6T26tZqzQuyXLc5OCp0Km0sjQriKSTlMPVUiuRjVkpVVdyfGZ96dpkacLMya2U97iZ7rTuSKVU4sduVep3rAVEWJoJ+H6/yX+dCuyxNBPw/X+S/zoBYGK8NQ4hudrfWLnR0iyPkZntkVdXVb1bFz6uk12MccWzDKJbqOBtTWMaiJCxdWOFOCOVN3UnmNvji8rYsM1dwZlyyN1IUX5btid2/sOeJpJJpXyyvc+R7lc5zlzVVXeqgS2u0kYqqJFdFVw0rV+JFA3Lvcir5z5otI2K6eRHSV0dS1PiSwNyXtaiL5yIgC98C44o8Rr7UmjSkuDW58lrZtkRN6tX7vSazS7haGutsl9o4kbWUzdafVT/ixpvVelN+fNn0FR26rnoK6CtpnqyaB6PYvSinSdFNDc7VDUaqOhqoGv1V4tc3PLuUDmQGTdKZaK51VGq5rBM+JfquVPuPOkgkqqqKmhbrSzPbGxOdVXJAJfozwf/iCqdW1yObbYHZKibFmd8lF5udf7S2rzdbRhe0skqVZTwMTUhhjambsvitb/aHvaKGksViho2K1kFLF4b12Z5Jm5y9a5qUJjK/VGIb3NXSuckKKrYI1XYxnBOvivSBJr1pSvFRI5trp4KKL4rnJyki9+zzGoZpBxc1+t+Vld0LBHl6pFgBZ+G9KkySshv1Ix0arks8CKit6Vbx7Muont5tlpxVYkjlWOenlbrwzs2qxeDmr/fMpzmbGC+XWCzvtENdLHRSP1nRNXLPPeme/Lo3AY1zpfaVwqKTlopuRkVnKRu1mvyXeinvYLVVXq7QW6jbnLKu1V3MbxcvQiGAXDoQs7ILPPeZGe61T1jjXmjau3Lrdn+6gEqsFmtOFbM5kKsiYxuvUVEmSK/Le5y83RwILibSnIkz4LBTM1EXL2xOiqrulreHb3GPpqxDJNXtw/TyKkMKI+oyX3716oi9CJkvWvQVsBKX6QMXOfr/lZW9CQR5eqbmx6UrtTytbdqeGth+M5jeTkTp2bF6sk6yvQB0bTT2TF1hVWpHV0cyar2OTwmO5l4tcn/opLHWGpsNXhadVdJSyor6eVU983mXpTj2LxPXR3iGSwYhie6RUo6hyR1LVXZkq7Hdab+rPnLZ0nWdl3wlVZMRZ6Vq1ES8c2ptTtTPtyAoEsTQT8P1/kv8AOhXZYmgn4fr/ACX+dAJxjbDP+JbnaGTOVtFTrK+oVF2rnqZNTryXbzIp6YlxJZMH2+KlSNvKIzKCkhyRcudfkp0+k2uJLpDZbJVXOZM2wMza3P3zl2NTtVUOc7pXVVzuE1dWSrJPM7Wc5fQnMibsgJbdNJuJKqRVpHU9DHwbHGj1y6Vdn6EMSn0h4thejnXJsqcWyQMyXuRF85FABcOEtJ1LXTMpL3CyilcuTZ2KvJKvSi7W9e1Ook2MMM2/EtuWKdrWVDW+4VDU8Ji/e3oOeC3tDGI5KylksVZIr5KZmvTuVdqx7lb2KqZdC9AFV3WgqbZcZ6Csj5OeF+q9PvToXeZ1mxPfbPSLSW24Op4Ver1ajGr4S5Iq7UXmQnunKzsWGkvkTER6O9rzKib02q1ezJU7UKqAtXRNia+XnEdRS3OvdUQtpHSNarGpk5HsTPYicFU3mlu83Ky2WkntlU6nkfU6jnI1FzTVVctqLzEM0GeNtV5A/wDiRkk06+LtD5X/ACOAgf8AjzFv/WZPso/wmNc8XYiudDJQ11zfNTy5a7FjYmeSoqbkz3ohogAAAAAAAAB0/QfoNP8ARN9BzRcvhGp+mf6VOl6D9Bp/om+g5qrY5JrtPFExz5Hzua1rUzVVV2xEQDxpoJqmojp6eN0ssjkaxjUzVyrwQvHR1g2HDtIlXVtbJc5W+G7ekSfJb96njo2wXHYadtwuDGvucjd29IEX4qdPOvYnTIcWUtyrMP1dNaan2vVvZkx3PztReCqmzPgBAdKeN/8Ai2Gzzc7aqdi97Gr6V7Ocq0+54pYJ3wzxujljcrXtcmStVN6KfAA/rVVrkci5Ki5ofwASb/HmLf8ArMn2Uf4S39HdfV3PB1DXV0yzVEvKa71REzykcibtm5EOei/NE/iBbP8Au/xXgQXHmL8R27F1fRUVzfDTxPajGJGxcvBReKZ8TR/48xb/ANZk+yj/AAnzpO8e7p9I31GkbAzr1d7jeaptTc6laiZjEja5WomTc1XLYicVU2lNjbFFNTx08N2eyKJiMY3kmbGomSJ70joAvXRNd7jecOVFVc6laiZtW6NrlaiZNRjFy2InFVI5pUxRfrPiZtJbbg6nhWmY/URjV2qrs12ovMhtdBnilVeXv/hxkR02eOLPJGes4DWf48xb/wBZk+yj/Cay+X+73tIUulY6p5HW5PNjU1c8s9yJzIawAAAAAAAAAAAAAAA2tpxFfLVklBdKmFibma+sz91c08xqgBYNq0q3mDJtwo6asam9zc43r2pmnmJpYNImHro9sMsr6Cd2xG1CIjVXocmzvyKKAHSOIbFa7/RLT3CnbImXgSt2PZ0tX+0KHxhh+qw5eHUNQvKRuTXhlRMkkbz9C86E60LYiqpZ5LBVyukjbEslMrlzVmSpm3q25pzZKbTThRMmwzT1mqnKU9QiIvzXIqKoe5JuVCxcT6OLpBFJWWyRa+NuarDsWZPR8ZPrKVbUW+qoKh9NWQSQTsXJzHpkqAe4OjMHaRrpY3tguGtcKVveS7ZWfLVNn2lcXvRXa3uR1vndSSLtWKVqcknyx7Mn3kIAHUK6XcPNXN9tq09a9ifcbWl0rYZVM3Ute3n5SKT10A5sAT3E2lm83BrqS3K21QcFjTPl3J0KvDtTLvMgAayzW+a7XWmttMxXTTP1W5bkTi5epE2kn0LYDgwrSvuNaqSXWZiZN3si5mrq8ycF7VQD09HGF28nH7armrW5zyN3NzXwV+SncnFq9ZP7xdLVhO0xrM6Onp4USOCCJqZuXcjWp0r/6BurVQUlgtjKSkakUEa5q5y+8keu1z17VXaqnK2kHFDsQ3hIIXObbqd3JxavHJPjOTm5u4C8cS4qpse4jrLjE6RKSNFjpmv2pq+/d0bVXJOo2OHsRUuJrVy8LpKWdurLS1C7WuTm616l4p0kPnp56iokoqSGWd+9kTHKv3IB6xkc5qI9urk3LQ5PVrqO17Kqpqy6MldJyUMm3kV47O8Zqt25WvJnzIuagZNutlVdq+Ogoo1kqJlya1F27OfqQlmGNH1LRxMrrjOtbMmx0bUVsXdmq596G+w7g6z4fiarJFqqRN81TImarEXoTL4q9ZNgAAAAAAAAAAAAAAAABt7Pe7vZ5VkttxnoXOzdyT1RM+KKm1PrHwALgs2lKqhyZd6KKsT50Ke5vT6zMn3qSmHSvRSMb7Ytb4HJyiauvl2NVfdCowBejdJGCpGIqezoqe+bNHl1fMvmMi7aRMMwZO5a4Vcs2/CjVV/aaQAXTU6VMOSMz9tuWb/wDiIqZ9rko/5tLFDW3VF2TNpI8vRk7J+yoAC57lpTqFXKjt1PA3g6aRXuTuybD1ptK1S5UbcaKBrfc3RuVF7H5J6CqgBd7NJtuRqpJa3t6Hxovqe0+HaU7epVe4oqdP8z0v9rFKIAHW0ekuxyImrPe2O/WSR3nVM2HSTh6VqK26ysVeD4V85EKDAFrWbSrQ1OsdbbZ4Ow5rz+y3yEmp8U2SrROSu9Kq52xSJ0ecj4AFmz6T7LGx3J01fLJwY1kaBv1nqh5f4mwwiIqJUXBVVP8AC1Mku5OI6AA5r7EjBcFvgxvd6dqNnnc2iiVN6Nai69vYruTq1u4AWSAAAAAAAAAAAAAAAAAAAAAAAAAA5J9nljFk9ws2BqWVHJTJ7frURdz3IrYmr0o1Xr1PadOY7xPbMG4SuGJLvJqUtFEr1av4j9yMb85zkRF6zXYRslJjmz4g0c4Wqm4fudVPW3BjuUudVVrIisS3bNRuXJNxEVGpmqLwyyVVA5dBdWJ9F9BWeO8J+0TrPa4Wq6S3xuROUjVNuvE3LWb05t/SWqAAAAAAAAAAAAAAAAAAAA8a2lp6+jmo6uFk9PO0sfG9Mo3tXaqKh7ACucaaL6Bj31+F5VtVS7xYH7YXLm5MuCL0dR+cJ7rWWC5T2y4UpgqYXasjVXiiouxUXcq8U4obnHuBrde2SVdG9aC5N2JVxp4a9Ua7vRKGQN3g/SNcrFM2Gr5O422Pwr4GZqno1VXvQ4/vtPFPp9E7csc3mr5OTj6xIABzLUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALN0b2JLxiqN8rNU22n962i8V4M7XJ26x9YOxPBhjBkMLpG1Nze2nRzFRHRs2cq9OC7EaipzoBJqbQzhtieS8VM1Y7czaR7WN7m5egjWJdHdls9I+S2zVNzqFROTbUsVHqm5UVU1kTt1tXg3JOkA5nAum86OcUajFrKRWs5ZN6K1+ot0qMZ2vTVVV4J9Yz47VXxP1Ffc7jBmqqsErWKnVrIjF81QBSmKNHN0opHS2V7LjCme7N2rKiJ0ZLkv2kKrY2qpkVitkuqq5oi8FQvfCmiCntssdXfJm1kzVyWCLNIWLzrvd2dxOKGlpqGB0NJBFBEi5oyJiNanYgFLYG0ZWqwPZcbpKlxqE2pBslZH9rcl7VR3pGdJfmFbta7Zp3GHNEjc8q2di9blVepqZ9mxThkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZVqtt3t2tFRVEMOa5pry5Z88jFABetmxbiK1aNbrY6K5SbHQ1MNQndqtjci+giWO9Fq2VjqrDVU1kieebSuakMvZtRV7yqABU+INKeLpHqkNZDBGnFtNT5P7XZL5yN1dhhexYxrLz7jUVE+ceSqx7EVM0RM19GZJgAC4JtKtiVqolBNyzf/MRcvRkmfnOecV6VqWiiWOzUPt2VNj55F5FvY1Nq9RXYAv+HB2GMONanJwxz1k7ebSJkW9rW/eFqREb5lMkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/2Q==" alt="Silver Concept Kft. logó" />
+  <div class="topbar-title">Kivitelezés <strong>ütemező</strong></div>
+</div>
+
+<div class="content">
+  <div class="header">
+    <div class="date-bar">
+      <div class="date-nav">
+        <button id="btn-prev">‹</button>
+        <span class="date-label" id="date-label">–</span>
+        <button id="btn-next">›</button>
+      </div>
+      <input type="date" id="date-picker" />
+      <span class="day-badge" id="day-badge"></span>
+    </div>
+    <div class="top-right">
+      <input class="job-input" id="new-job-input" placeholder="Új munka neve…" maxlength="40" />
+      <button class="btn primary" id="btn-add-job">+ Munka</button>
+      <button class="btn ghost" id="btn-clear">↺ Visszaállítás</button>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">Csatlakozás…</span>
+  </div>
+
+  <div class="mobile-hint">📱 Koppints egy kártyára → majd koppints a célhelyre a mozgatáshoz</div>
+
+  <div class="selected-bar" id="selected-bar">
+    <span>Kijelölve: <strong id="selected-label">–</strong> — koppints a célhelyre!</span>
+    <button id="btn-cancel-sel">Mégse</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--person-bg);border-color:var(--person-border)"></div>Belső kolléga</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--ext-person-bg);border-color:var(--ext-person-border)"></div>Külső kolléga</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--car-bg);border-color:var(--car-border)"></div>Saját autó</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--ext-car-bg);border-color:var(--ext-car-border)"></div>Külső autó</div>
+    <div class="legend-item" style="color:var(--text-hint)">✏️ megjegyzés</div>
+  </div>
+
+  <div class="layout">
+    <div class="sidebar">
+      <div class="pool-section">
+        <div class="pool-label">Kollégák</div>
+        <div class="pool" id="pool-persons" data-zone="pool-persons"></div>
+        <button class="add-ext-btn person" id="btn-add-ext-person">+ Külső kolléga</button>
+      </div>
+      <div class="divider"></div>
+      <div class="pool-section">
+        <div class="pool-label">Saját autók</div>
+        <div class="pool" id="pool-cars" data-zone="pool-cars"></div>
+      </div>
+      <div class="divider"></div>
+      <div class="pool-section">
+        <div class="pool-label">Külső autók</div>
+        <div class="pool" id="pool-ext-cars" data-zone="pool-ext-cars"></div>
+        <button class="add-ext-btn car" id="btn-add-ext-car">+ Külső autó</button>
+      </div>
+    </div>
+    <div class="main">
+      <div class="board" id="board"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+const firebaseConfig = { databaseURL: "https://kapacitastervezo-default-rtdb.europe-west1.firebasedatabase.app" };
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+const PERSONS   = ['Süni','Dezsi','M.Ádám','Bazsi','Geri','Ábel','T.Ádám','Martin','Szalma Ricsi','Szécsi Ricsi','Levi','Peti'];
+const CARS      = ['AAHY','AABB','SUT','PPH','SPG','SWT'];
+const HU_DAYS   = ['vasárnap','hétfő','kedd','szerda','csütörtök','péntek','szombat'];
+const HU_MONTHS = ['január','február','március','április','május','június','július','augusztus','szeptember','október','november','december'];
+const MAX_JOBS  = 7;
+
+let currentDate  = todayStr();
+let dayData      = { jobs:[], zones:{}, notes:{}, extPersons:[], extCars:[] };
+let dbListener   = null;
+let saveTimer    = null;
+let selectedCard = null;
+let dragCard     = null, dragFrom = null;
+
+function todayStr() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+}
+function addDays(dateStr, delta) {
+  const [y,m,d] = dateStr.split('-').map(Number);
+  const dt = new Date(y, m-1, d);
+  dt.setDate(dt.getDate()+delta);
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
+function mkId()     { return Math.random().toString(36).slice(2,9); }
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Status ────────────────────────────────────────────────────────
+function setStatus(state, text) {
+  document.getElementById('status-dot').className = 'status-dot'+(state?' '+state:'');
+  document.getElementById('status-text').textContent = text;
+}
+
+// ── Date UI ───────────────────────────────────────────────────────
+function updateDateUI() {
+  const [y,m,d] = currentDate.split('-').map(Number);
+  const dateObj  = new Date(y, m-1, d);
+  const dayName  = HU_DAYS[dateObj.getDay()];
+  document.getElementById('date-label').textContent = `${y}. ${HU_MONTHS[m-1]} ${d}.`;
+  document.getElementById('date-picker').value = currentDate;
+  const badge = document.getElementById('day-badge');
+  badge.textContent = dayName;
+  const wknd = dayName==='szombat'||dayName==='vasárnap';
+  badge.className = 'day-badge'+(wknd?' weekend':'');
+}
+
+// ── Events ────────────────────────────────────────────────────────
+document.getElementById('btn-prev').addEventListener('click', () => { currentDate=addDays(currentDate,-1); clearSelection(); switchDate(); });
+document.getElementById('btn-next').addEventListener('click', () => { currentDate=addDays(currentDate,1);  clearSelection(); switchDate(); });
+document.getElementById('date-picker').addEventListener('change', function(){ if(!this.value) return; currentDate=this.value; clearSelection(); switchDate(); });
+document.getElementById('btn-add-job').addEventListener('click', addJob);
+document.getElementById('new-job-input').addEventListener('keydown', e=>{ if(e.key==='Enter') addJob(); });
+document.getElementById('btn-clear').addEventListener('click', clearBoard);
+document.getElementById('btn-cancel-sel').addEventListener('click', clearSelection);
+document.getElementById('btn-add-ext-person').addEventListener('click', ()=>openModal('modal-ext-person'));
+document.getElementById('btn-add-ext-car').addEventListener('click',    ()=>openModal('modal-ext-car'));
+document.getElementById('btn-confirm-ext-person').addEventListener('click', confirmExtPerson);
+document.getElementById('btn-cancel-ext-person').addEventListener('click',  ()=>closeModal('modal-ext-person'));
+document.getElementById('btn-confirm-ext-car').addEventListener('click', confirmExtCar);
+document.getElementById('btn-cancel-ext-car').addEventListener('click',  ()=>closeModal('modal-ext-car'));
+document.getElementById('ext-person-name').addEventListener('keydown', e=>{ if(e.key==='Enter') confirmExtPerson(); });
+document.getElementById('ext-car-plate').addEventListener('keydown',   e=>{ if(e.key==='Enter') confirmExtCar(); });
+document.querySelectorAll('.modal-backdrop').forEach(bd=>bd.addEventListener('click',e=>{ if(e.target===bd) bd.classList.add('hidden'); }));
+
+function openModal(id)  { document.getElementById(id).classList.remove('hidden'); setTimeout(()=>document.querySelector('#'+id+' input').focus(),50); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+// ── Firebase ──────────────────────────────────────────────────────
+function dbPath() { return 'days/'+currentDate; }
+function switchDate() {
+  updateDateUI();
+  if(dbListener){ dbListener(); dbListener=null; }
+  setStatus('','Betöltés…');
+  listenDay();
+}
+function listenDay() {
+  dbListener = onValue(ref(db,dbPath()), snap=>{
+    document.getElementById('loading').style.display='none';
+    const val=snap.val()||{};
+    dayData={ jobs:val.jobs||[], zones:val.zones||{}, notes:val.notes||{}, extPersons:val.extPersons||[], extCars:val.extCars||[] };
+    renderAll();
+    setStatus('connected','Szinkronizálva – '+new Date().toLocaleTimeString('hu-HU',{hour:'2-digit',minute:'2-digit'}));
+  }, err=>setStatus('','Kapcsolati hiba: '+err.message));
+}
+function scheduleSave() {
+  setStatus('saving','Mentés…');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    set(ref(db,dbPath()),dayData)
+      .then(()=>setStatus('connected','Mentve – '+new Date().toLocaleTimeString('hu-HU',{hour:'2-digit',minute:'2-digit'})))
+      .catch(e=>setStatus('','Mentési hiba: '+e.message));
+  },400);
+}
+
+// ── Selection ─────────────────────────────────────────────────────
+function selectCard(cardObj, fromZone) {
+  selectedCard={ ...cardObj, fromZone };
+  document.getElementById('selected-label').textContent=cardObj.label;
+  document.getElementById('selected-bar').classList.add('visible');
+  renderAll();
+}
+function clearSelection() {
+  selectedCard=null;
+  document.getElementById('selected-bar').classList.remove('visible');
+  renderAll();
+}
+function isValidTarget(type, zone) {
+  if(!zone) return false;
+  if(zone==='pool-persons')  return ['person','ext-person'].includes(type);
+  if(zone==='pool-cars')     return type==='car';
+  if(zone==='pool-ext-cars') return type==='ext-car';
+  if(zone.startsWith('job-'))return ['person','ext-person','car','ext-car'].includes(type);
+  return false;
+}
+function handleZoneTap(zoneId) {
+  if(!selectedCard) return;
+  if(!isValidTarget(selectedCard.type,zoneId)) return;
+  const c=selectedCard;
+  removeCardFromZone(c.fromZone,c.id);
+  if(zoneId!=='pool-persons'&&zoneId!=='pool-cars'){
+    if(!dayData.zones[zoneId]) dayData.zones[zoneId]=[];
+    if(!dayData.zones[zoneId].find(x=>x.id===c.id)) dayData.zones[zoneId].push({id:c.id,label:c.label,type:c.type});
+  }
+  clearSelection();
+  scheduleSave();
+}
+
+// ── Drag & Drop ───────────────────────────────────────────────────
+function onDragOver(e){ e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function onDragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
+function onDrop(e){
+  e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+  if(!dragCard) return;
+  const target=e.currentTarget.dataset.zone;
+  const c=dragCard;
+  if(!isValidTarget(c.type,target)){ dragCard=null; dragFrom=null; return; }
+  removeCardFromZone(dragFrom,c.id);
+  if(target!=='pool-persons'&&target!=='pool-cars'){
+    if(!dayData.zones[target]) dayData.zones[target]=[];
+    if(!dayData.zones[target].find(x=>x.id===c.id)) dayData.zones[target].push({id:c.id,label:c.label,type:c.type});
+  }
+  dragCard=null; dragFrom=null;
+  scheduleSave();
+}
+function removeCardFromZone(zoneId,cardId){
+  if(!zoneId||!dayData.zones[zoneId]) return;
+  dayData.zones[zoneId]=dayData.zones[zoneId].filter(c=>c.id!==cardId);
+  if(!dayData.zones[zoneId].length) delete dayData.zones[zoneId];
+}
+
+// ── Render ────────────────────────────────────────────────────────
+function renderAll(){ renderSidebar(); renderBoard(); updateDropTargets(); }
+function updateDropTargets(){
+  document.querySelectorAll('.drop-zone,.pool').forEach(el=>{
+    el.classList.remove('drop-target');
+    if(selectedCard&&isValidTarget(selectedCard.type,el.dataset.zone)) el.classList.add('drop-target');
+  });
+}
+function renderSidebar(){
+  const placed=new Set();
+  Object.values(dayData.zones).forEach(arr=>(arr||[]).forEach(c=>placed.add(c.id)));
+  const poolPersons   = PERSONS.filter(n=>!placed.has('p_'+n.replace(/\s/g,'_'))).map(n=>({id:'p_'+n.replace(/\s/g,'_'),label:n,type:'person'}));
+  const extPersonPool = (dayData.extPersons||[]).filter(c=>!placed.has(c.id));
+  const poolCars      = CARS.filter(p=>!placed.has('c_'+p)).map(p=>({id:'c_'+p,label:p,type:'car'}));
+  const extCarsPool   = (dayData.extCars||[]).filter(c=>!placed.has(c.id));
+  renderPool('pool-persons',  poolPersons,   extPersonPool);
+  renderPool('pool-cars',     poolCars,      []);
+  renderPool('pool-ext-cars', [],            extCarsPool);
+}
+function renderPool(poolId, normalCards, extCards){
+  const el=document.getElementById(poolId);
+  if(!el) return;
+  el.innerHTML='';
+  el.addEventListener('dragover',onDragOver);
+  el.addEventListener('dragleave',onDragLeave);
+  el.addEventListener('drop',onDrop);
+  el.onclick=ev=>{ if(ev.target===el&&selectedCard) handleZoneTap(poolId); };
+  normalCards.forEach(c=>el.appendChild(makeCardEl(c,poolId)));
+  extCards.forEach(c=>{
+    const wrap=document.createElement('div');
+    wrap.className='card-wrap';
+    const cardEl=makeCardEl(c,poolId);
+    const delBtn=document.createElement('button');
+    delBtn.className='card-del'; delBtn.textContent='✕'; delBtn.title='Törlés';
+    delBtn.addEventListener('click',ev=>{ ev.stopPropagation(); deleteExtCard(c.id,c.type); });
+    wrap.appendChild(cardEl); wrap.appendChild(delBtn); el.appendChild(wrap);
+  });
+}
+function makeCardEl(cardObj,zoneId){
+  const el=document.createElement('div');
+  const isSel=selectedCard&&selectedCard.id===cardObj.id;
+  el.className='card '+cardObj.type+(isSel?' selected':'');
+  el.draggable=true; el.title=cardObj.label; el.textContent=cardObj.label;
+  el.addEventListener('click',ev=>{ ev.stopPropagation(); if(selectedCard&&selectedCard.id===cardObj.id) clearSelection(); else selectCard(cardObj,zoneId); });
+  el.addEventListener('dragstart',ev=>{ dragCard={id:cardObj.id,label:cardObj.label,type:cardObj.type}; dragFrom=zoneId; ev.dataTransfer.effectAllowed='move'; setTimeout(()=>el.classList.add('dragging'),0); });
+  el.addEventListener('dragend',()=>el.classList.remove('dragging'));
+  return el;
+}
+function renderBoard(){
+  const board=document.getElementById('board');
+  board.innerHTML='';
+  if(!dayData.jobs||!dayData.jobs.length){
+    board.innerHTML='<div class="empty-day">Még nincs munka erre a napra.<br>Adj hozzá fent.</div>';
+    return;
+  }
+  dayData.jobs.forEach(job=>{
+    const col=document.createElement('div'); col.className='col';
+    const hdr=document.createElement('div'); hdr.className='col-header';
+    const hasNote=!!(dayData.notes&&dayData.notes[job.id]);
+    hdr.innerHTML='<span class="note-btn'+(hasNote?' has-note':'')+'">'+(hasNote?'✏️':'✎')+'</span><span>'+escHtml(job.label)+'</span><span class="del-col">✕</span>';
+    hdr.querySelector('.del-col').addEventListener('click',ev=>{ ev.stopPropagation(); removeJob(job.id); });
+    hdr.querySelector('.note-btn').addEventListener('click',ev=>{ ev.stopPropagation(); toggleNote(job.id,col); });
+    const noteBox=document.createElement('div'); noteBox.className='note-box'; noteBox.dataset.notefor=job.id; noteBox.style.display='none';
+    const ta=document.createElement('textarea'); ta.placeholder='Megjegyzés…'; ta.value=(dayData.notes&&dayData.notes[job.id])||'';
+    ta.addEventListener('input',()=>{ if(!dayData.notes) dayData.notes={}; dayData.notes[job.id]=ta.value; scheduleSave(); const nb=hdr.querySelector('.note-btn'); nb.className='note-btn'+(ta.value?' has-note':''); nb.textContent=ta.value?'✏️':'✎'; });
+    noteBox.appendChild(ta);
+    const dz=document.createElement('div'); dz.className='drop-zone'; dz.dataset.zone=job.id;
+    dz.addEventListener('click',ev=>{ if(selectedCard){ ev.stopPropagation(); handleZoneTap(job.id); } });
+    dz.addEventListener('dragover',onDragOver); dz.addEventListener('dragleave',onDragLeave); dz.addEventListener('drop',onDrop);
+    (dayData.zones[job.id]||[]).forEach(c=>dz.appendChild(makeCardEl(c,job.id)));
+    col.appendChild(hdr); col.appendChild(noteBox); col.appendChild(dz);
+    board.appendChild(col);
+    if(hasNote) noteBox.style.display='block';
+  });
+}
+function toggleNote(jid,col){
+  const nb=col.querySelector('[data-notefor="'+jid+'"]');
+  if(!nb) return;
+  nb.style.display=nb.style.display==='none'?'block':'none';
+  if(nb.style.display==='block') nb.querySelector('textarea').focus();
+}
+function deleteExtCard(cid,type){
+  if(type==='ext-person') dayData.extPersons=(dayData.extPersons||[]).filter(c=>c.id!==cid);
+  else if(type==='ext-car') dayData.extCars=(dayData.extCars||[]).filter(c=>c.id!==cid);
+  Object.keys(dayData.zones).forEach(zid=>{ dayData.zones[zid]=(dayData.zones[zid]||[]).filter(c=>c.id!==cid); if(!dayData.zones[zid].length) delete dayData.zones[zid]; });
+  scheduleSave();
+}
+function addJob(){
+  if((dayData.jobs||[]).length>=MAX_JOBS){ alert('Maximum '+MAX_JOBS+' munkát adhatsz hozzá.'); return; }
+  const input=document.getElementById('new-job-input');
+  const label=input.value.trim(); if(!label) return;
+  input.value=''; if(!dayData.jobs) dayData.jobs=[];
+  dayData.jobs.push({id:'job-'+mkId(),label});
+  scheduleSave();
+}
+function removeJob(jid){
+  delete dayData.zones[jid]; if(dayData.notes) delete dayData.notes[jid];
+  dayData.jobs=(dayData.jobs||[]).filter(j=>j.id!==jid);
+  scheduleSave();
+}
+function clearBoard(){
+  if(!confirm('Visszaállítja a táblát?\n(munkák, kártyák és megjegyzések törlődnek)')) return;
+  dayData.jobs=[]; dayData.zones={}; dayData.notes={}; scheduleSave();
+}
+function confirmExtPerson(){
+  const inp=document.getElementById('ext-person-name');
+  const val=inp.value.trim(); if(!val) return;
+  inp.value=''; closeModal('modal-ext-person');
+  if(!dayData.extPersons) dayData.extPersons=[];
+  dayData.extPersons.push({id:'ep_'+mkId(),label:val,type:'ext-person'});
+  scheduleSave();
+}
+function confirmExtCar(){
+  const inp=document.getElementById('ext-car-plate');
+  const val=inp.value.trim().toUpperCase(); if(!val) return;
+  inp.value=''; closeModal('modal-ext-car');
+  if(!dayData.extCars) dayData.extCars=[];
+  dayData.extCars.push({id:'ec_'+mkId(),label:val,type:'ext-car'});
+  scheduleSave();
+}
+updateDateUI();
+listenDay();
+</script>
+</body>
+</html>

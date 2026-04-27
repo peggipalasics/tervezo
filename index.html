@@ -242,7 +242,7 @@
     <div class="legend-item"><div class="legend-dot" style="background:var(--ext-person-bg);border-color:var(--ext-person-border)"></div>Külső kolléga</div>
     <div class="legend-item"><div class="legend-dot" style="background:var(--car-bg);border-color:var(--car-border)"></div>Saját autó</div>
     <div class="legend-item"><div class="legend-dot" style="background:var(--ext-car-bg);border-color:var(--ext-car-border)"></div>Külső autó</div>
-    <div class="legend-item" style="color:var(--text-hint)">✏️ megjegyzés</div>
+    <div class="legend-item" style="color:var(--text-hint)">+ megjegyzés hozzáadása &nbsp;✎ megjegyzés megnyitása</div>
   </div>
 
   <div class="layout">
@@ -497,7 +497,7 @@ function renderBoard(){
     const hdr=document.createElement('div'); hdr.className='col-header';
     const hasNote=!!(dayData.notes&&dayData.notes[job.id]);
     const noteBtn=document.createElement('span');
-    noteBtn.className='note-btn'+(hasNote?' has-note':''); noteBtn.textContent=hasNote?'✏️':'✎';
+    noteBtn.className='note-btn'+(hasNote?' has-note':''); noteBtn.textContent=hasNote?'✎':'+'; noteBtn.title=hasNote?'Megjegyzés szerkesztése':'Megjegyzés hozzáadása';
     noteBtn.addEventListener('click',ev=>{ ev.stopPropagation(); toggleNote(job.id,col); });
     const nameSpan=document.createElement('span');
     nameSpan.className='job-name'; nameSpan.textContent=job.label; nameSpan.title='Dupla kattintás: átnevezés';
@@ -511,7 +511,7 @@ function renderBoard(){
     hdr.appendChild(noteBtn); hdr.appendChild(nameSpan); hdr.appendChild(editBtn); hdr.appendChild(delBtn);
     const noteBox=document.createElement('div'); noteBox.className='note-box'; noteBox.dataset.notefor=job.id; noteBox.style.display='none';
     const ta=document.createElement('textarea'); ta.placeholder='Megjegyzés…'; ta.value=(dayData.notes&&dayData.notes[job.id])||'';
-    ta.addEventListener('input',()=>{ if(!dayData.notes) dayData.notes={}; dayData.notes[job.id]=ta.value; scheduleSave(); const nb=hdr.querySelector('.note-btn'); nb.className='note-btn'+(ta.value?' has-note':''); nb.textContent=ta.value?'✏️':'✎'; });
+    ta.addEventListener('input',()=>{ if(!dayData.notes) dayData.notes={}; dayData.notes[job.id]=ta.value; scheduleSave(); const nb=hdr.querySelector('.note-btn'); nb.className='note-btn'+(ta.value?' has-note':''); nb.textContent=ta.value?'✎':'+'; nb.title=ta.value?'Megjegyzés szerkesztése':'Megjegyzés hozzáadása'; });
     noteBox.appendChild(ta);
     const dz=document.createElement('div'); dz.className='drop-zone'; dz.dataset.zone=job.id;
     dz.addEventListener('click',ev=>{ if(selectedCard){ ev.stopPropagation(); handleZoneTap(job.id); } });

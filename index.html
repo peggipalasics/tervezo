@@ -113,6 +113,11 @@
   .del-col { position: absolute; top: 3px; right: 3px; font-size: 10px; cursor: pointer; color: var(--text-hint); display: none; width: 14px; height: 14px; align-items: center; justify-content: center; border-radius: 3px; }
   .col-header:hover .del-col { display: flex; }
   .del-col:hover { background: #fee2e2; color: #b91c1c; }
+  .edit-col { position: absolute; top: 3px; right: 20px; font-size: 10px; cursor: pointer; color: var(--text-hint); display: none; width: 14px; height: 14px; align-items: center; justify-content: center; border-radius: 3px; }
+  .col-header:hover .edit-col { display: flex; }
+  .edit-col:hover { background: #dbeafe; color: #1d4ed8; }
+  @media (pointer: coarse) { .edit-col { display: flex !important; } }
+  .job-name { cursor: text; }
   .note-btn { position: absolute; top: 3px; left: 3px; font-size: 10px; cursor: pointer; color: var(--text-hint); display: flex; width: 14px; height: 14px; align-items: center; justify-content: center; border-radius: 3px; }
   .note-btn:hover { background: #fef9c3; color: #854d0e; }
   .note-btn.has-note { color: #ca8a04; }
@@ -416,6 +421,23 @@ function removeCardFromZone(zoneId,cardId){
   if(!dayData.zones[zoneId].length) delete dayData.zones[zoneId];
 }
 
+function startEditJobName(jid, currentLabel, nameSpan) {
+  const inp=document.createElement('input');
+  inp.value=currentLabel;
+  inp.style.cssText='width:100%;border:none;outline:2px solid var(--accent);outline-offset:2px;border-radius:4px;background:var(--accent-bg);font:inherit;font-size:11px;font-weight:700;text-align:center;color:var(--text);padding:2px 4px;';
+  nameSpan.replaceWith(inp);
+  inp.focus(); inp.select();
+  let saved=false;
+  function save(){
+    if(saved) return; saved=true;
+    const newLabel=inp.value.trim()||currentLabel;
+    const job=dayData.jobs.find(j=>j.id===jid);
+    if(job&&newLabel!==job.label){ job.label=newLabel; scheduleSave(); }
+    renderAll();
+  }
+  inp.addEventListener('blur',save);
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); inp.blur(); } if(e.key==='Escape'){ inp.value=currentLabel; inp.blur(); } });
+}
 function renderAll(){ renderSidebar(); renderBoard(); updateDropTargets(); }
 function updateDropTargets(){
   document.querySelectorAll('.drop-zone,.pool').forEach(el=>{
@@ -474,9 +496,19 @@ function renderBoard(){
     const col=document.createElement('div'); col.className='col';
     const hdr=document.createElement('div'); hdr.className='col-header';
     const hasNote=!!(dayData.notes&&dayData.notes[job.id]);
-    hdr.innerHTML='<span class="note-btn'+(hasNote?' has-note':'')+'">'+(hasNote?'✏️':'✎')+'</span><span>'+escHtml(job.label)+'</span><span class="del-col">✕</span>';
-    hdr.querySelector('.del-col').addEventListener('click',ev=>{ ev.stopPropagation(); removeJob(job.id); });
-    hdr.querySelector('.note-btn').addEventListener('click',ev=>{ ev.stopPropagation(); toggleNote(job.id,col); });
+    const noteBtn=document.createElement('span');
+    noteBtn.className='note-btn'+(hasNote?' has-note':''); noteBtn.textContent=hasNote?'✏️':'✎';
+    noteBtn.addEventListener('click',ev=>{ ev.stopPropagation(); toggleNote(job.id,col); });
+    const nameSpan=document.createElement('span');
+    nameSpan.className='job-name'; nameSpan.textContent=job.label; nameSpan.title='Dupla kattintás: átnevezés';
+    nameSpan.addEventListener('dblclick',ev=>{ ev.stopPropagation(); startEditJobName(job.id,job.label,nameSpan); });
+    const editBtn=document.createElement('span');
+    editBtn.className='edit-col'; editBtn.textContent='✎'; editBtn.title='Átnevezés';
+    editBtn.addEventListener('click',ev=>{ ev.stopPropagation(); startEditJobName(job.id,job.label,nameSpan); });
+    const delBtn=document.createElement('span');
+    delBtn.className='del-col'; delBtn.textContent='✕';
+    delBtn.addEventListener('click',ev=>{ ev.stopPropagation(); removeJob(job.id); });
+    hdr.appendChild(noteBtn); hdr.appendChild(nameSpan); hdr.appendChild(editBtn); hdr.appendChild(delBtn);
     const noteBox=document.createElement('div'); noteBox.className='note-box'; noteBox.dataset.notefor=job.id; noteBox.style.display='none';
     const ta=document.createElement('textarea'); ta.placeholder='Megjegyzés…'; ta.value=(dayData.notes&&dayData.notes[job.id])||'';
     ta.addEventListener('input',()=>{ if(!dayData.notes) dayData.notes={}; dayData.notes[job.id]=ta.value; scheduleSave(); const nb=hdr.querySelector('.note-btn'); nb.className='note-btn'+(ta.value?' has-note':''); nb.textContent=ta.value?'✏️':'✎'; });

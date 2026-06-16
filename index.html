@@ -117,6 +117,10 @@
   @media (pointer: coarse) { .col-grip { display: none; } }
 
   .col-header { font-size: 11px; font-weight: 700; text-align: center; padding: 7px 18px 5px; background: var(--surface); border: 1px solid var(--border); border-top: 3px solid var(--brand-teal); border-radius: var(--radius); color: var(--text); min-height: 40px; display: flex; align-items: center; justify-content: center; word-break: break-word; line-height: 1.3; position: relative; box-shadow: var(--shadow); }
+  /* Fix "nem elérhető" oszlop – semleges szürke, hogy elkülönüljön */
+  .col-header.fixed-header { border-top-color: #9aa0a6; background: #eceef0; color: #5f6368; padding: 7px 8px 5px; font-size: 10px; }
+  .drop-zone.fixed-zone { background: #eceef0; border-color: #c9ccd1; }
+  .drop-zone.fixed-zone.drop-target, .drop-zone.fixed-zone.drag-over { background: #dfe2e6; border-color: #9aa0a6; }
   .del-col { position: absolute; top: 3px; right: 3px; font-size: 10px; cursor: pointer; color: var(--text-hint); display: none; width: 14px; height: 14px; align-items: center; justify-content: center; border-radius: 3px; }
   .col-header:hover .del-col { display: flex; }
   .del-col:hover { background: #fee2e2; color: #b91c1c; }
@@ -290,6 +294,8 @@ const CARS      = ['AAHY','AABB','SUT','PPH','SPG','SWT'];
 const HU_DAYS   = ['vasárnap','hétfő','kedd','szerda','csütörtök','péntek','szombat'];
 const HU_MONTHS = ['január','február','március','április','május','június','július','augusztus','szeptember','október','november','december'];
 const MAX_JOBS  = 7;
+const FIXED_JOB_ID    = 'job-unavailable';
+const FIXED_JOB_LABEL = 'nincs / szabadság / betegség';
 
 let currentDate  = todayStr();
 let dayData      = { jobs:[], zones:{}, notes:{}, extPersons:[], extCars:[] };
@@ -494,14 +500,22 @@ function makeCardEl(cardObj,zoneId){
   el.addEventListener('dragend',()=>el.classList.remove('dragging'));
   return el;
 }
+function makeFixedColumn(){
+  const col=document.createElement('div'); col.className='col';
+  const hdr=document.createElement('div'); hdr.className='col-header fixed-header';
+  hdr.textContent=FIXED_JOB_LABEL; hdr.title='Ide kerülnek a nem elérhető kollégák (szabadság, betegség) – velük nem kell számolni';
+  const dz=document.createElement('div'); dz.className='drop-zone fixed-zone'; dz.dataset.zone=FIXED_JOB_ID;
+  dz.addEventListener('click',ev=>{ if(selectedCard){ ev.stopPropagation(); handleZoneTap(FIXED_JOB_ID); } });
+  dz.addEventListener('dragover',onDragOver); dz.addEventListener('dragleave',onDragLeave); dz.addEventListener('drop',onDrop);
+  (dayData.zones[FIXED_JOB_ID]||[]).forEach(c=>dz.appendChild(makeCardEl(c,FIXED_JOB_ID)));
+  col.appendChild(hdr); col.appendChild(dz);
+  return col;
+}
 function renderBoard(){
   const board=document.getElementById('board');
   board.innerHTML='';
-  if(!dayData.jobs||!dayData.jobs.length){
-    board.innerHTML='<div class="empty-day">Még nincs munka erre a napra.<br>Adj hozzá fent.</div>';
-    return;
-  }
-  dayData.jobs.forEach(job=>{
+  board.appendChild(makeFixedColumn());
+  (dayData.jobs||[]).forEach(job=>{
     const col=document.createElement('div'); col.className='col'; col.dataset.jobId=job.id;
     const hdr=document.createElement('div'); hdr.className='col-header';
     const hasNote=!!(dayData.notes&&dayData.notes[job.id]);

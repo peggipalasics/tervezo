@@ -108,6 +108,13 @@
   .board { display: flex; gap: 8px; padding-bottom: 8px; align-items: flex-start; }
   .col { flex: 0 0 138px; display: flex; flex-direction: column; gap: 4px; }
   @media (max-width: 600px) { .col { flex: 0 0 115px; } }
+  .col.col-dragging { opacity: 0.4; }
+  .col.col-drop-before > .col-header { box-shadow: -3px 0 0 0 var(--brand-teal), var(--shadow); }
+  .col.col-drop-after  > .col-header { box-shadow:  3px 0 0 0 var(--brand-teal), var(--shadow); }
+  /* Oszlop áthelyezés fogantyú – csak egérrel/asztali gépen */
+  .col-grip { position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); font-size: 9px; line-height: 1; color: var(--text-hint); cursor: grab; letter-spacing: 1px; user-select: none; }
+  .col-grip:active { cursor: grabbing; }
+  @media (pointer: coarse) { .col-grip { display: none; } }
 
   .col-header { font-size: 11px; font-weight: 700; text-align: center; padding: 7px 18px 5px; background: var(--surface); border: 1px solid var(--border); border-top: 3px solid var(--brand-teal); border-radius: var(--radius); color: var(--text); min-height: 40px; display: flex; align-items: center; justify-content: center; word-break: break-word; line-height: 1.3; position: relative; box-shadow: var(--shadow); }
   .del-col { position: absolute; top: 3px; right: 3px; font-size: 10px; cursor: pointer; color: var(--text-hint); display: none; width: 14px; height: 14px; align-items: center; justify-content: center; border-radius: 3px; }
@@ -123,7 +130,7 @@
   .note-btn.has-note { color: #ca8a04; }
 
   .note-box { background: #fefce8; border: 1px solid #fde047; border-radius: var(--radius); padding: 5px 6px; }
-  .note-box textarea { width: 100%; background: transparent; border: none; outline: none; font-family: inherit; font-size: 11px; color: #713f12; resize: none; min-height: 44px; line-height: 1.4; }
+  .note-box textarea { width: 100%; background: transparent; border: none; outline: none; font-family: inherit; font-size: 11px; color: #713f12; resize: vertical; min-height: 80px; max-height: 400px; line-height: 1.4; overflow-y: auto; }
   .note-box textarea::placeholder { color: #a16207; opacity: 0.6; }
 
   .drop-zone { min-height: 180px; border: 1.5px dashed var(--border-light); border-radius: var(--radius); padding: 4px; display: flex; flex-direction: column; gap: 3px; transition: background 0.12s, border-color 0.12s; background: rgba(255,255,255,0.6); }
@@ -290,6 +297,7 @@ let dbListener   = null;
 let saveTimer    = null;
 let selectedCard = null;
 let dragCard     = null, dragFrom = null;
+let dragJobId    = null;
 
 function todayStr() {
   const n = new Date();
@@ -399,9 +407,10 @@ function handleZoneTap(zoneId) {
   scheduleSave();
 }
 
-function onDragOver(e){ e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function onDragOver(e){ if(dragJobId) return; e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
 function onDragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
 function onDrop(e){
+  if(dragJobId) return;
   e.preventDefault(); e.currentTarget.classList.remove('drag-over');
   if(!dragCard) return;
   const target=e.currentTarget.dataset.zone;
@@ -493,7 +502,7 @@ function renderBoard(){
     return;
   }
   dayData.jobs.forEach(job=>{
-    const col=document.createElement('div'); col.className='col';
+    const col=document.createElement('div'); col.className='col'; col.dataset.jobId=job.id;
     const hdr=document.createElement('div'); hdr.className='col-header';
     const hasNote=!!(dayData.notes&&dayData.notes[job.id]);
     const noteBtn=document.createElement('span');
@@ -508,25 +517,56 @@ function renderBoard(){
     const delBtn=document.createElement('span');
     delBtn.className='del-col'; delBtn.textContent='✕';
     delBtn.addEventListener('click',ev=>{ ev.stopPropagation(); removeJob(job.id); });
-    hdr.appendChild(noteBtn); hdr.appendChild(nameSpan); hdr.appendChild(editBtn); hdr.appendChild(delBtn);
+    const grip=document.createElement('span');
+    grip.className='col-grip'; grip.textContent='⠿⠿'; grip.title='Húzd a munkák átrendezéséhez'; grip.draggable=true;
+    grip.addEventListener('dragstart',ev=>{ dragJobId=job.id; ev.dataTransfer.effectAllowed='move'; ev.dataTransfer.setData('text/plain',job.id); setTimeout(()=>col.classList.add('col-dragging'),0); });
+    grip.addEventListener('dragend',()=>{ dragJobId=null; clearColDropHints(); col.classList.remove('col-dragging'); });
+    hdr.appendChild(noteBtn); hdr.appendChild(nameSpan); hdr.appendChild(editBtn); hdr.appendChild(delBtn); hdr.appendChild(grip);
     const noteBox=document.createElement('div'); noteBox.className='note-box'; noteBox.dataset.notefor=job.id; noteBox.style.display='none';
     const ta=document.createElement('textarea'); ta.placeholder='Megjegyzés…'; ta.value=(dayData.notes&&dayData.notes[job.id])||'';
-    ta.addEventListener('input',()=>{ if(!dayData.notes) dayData.notes={}; dayData.notes[job.id]=ta.value; scheduleSave(); const nb=hdr.querySelector('.note-btn'); nb.className='note-btn'+(ta.value?' has-note':''); nb.textContent='+'; nb.title=ta.value?'Megjegyzés szerkesztése':'Megjegyzés hozzáadása'; });
+    ta.addEventListener('input',()=>{ if(!dayData.notes) dayData.notes={}; dayData.notes[job.id]=ta.value; autoGrowNote(ta); scheduleSave(); const nb=hdr.querySelector('.note-btn'); nb.className='note-btn'+(ta.value?' has-note':''); nb.textContent='+'; nb.title=ta.value?'Megjegyzés szerkesztése':'Megjegyzés hozzáadása'; });
     noteBox.appendChild(ta);
     const dz=document.createElement('div'); dz.className='drop-zone'; dz.dataset.zone=job.id;
     dz.addEventListener('click',ev=>{ if(selectedCard){ ev.stopPropagation(); handleZoneTap(job.id); } });
     dz.addEventListener('dragover',onDragOver); dz.addEventListener('dragleave',onDragLeave); dz.addEventListener('drop',onDrop);
     (dayData.zones[job.id]||[]).forEach(c=>dz.appendChild(makeCardEl(c,job.id)));
+    // Oszlop átrendezés (csak asztali gépen, húzd-és-ejtsd a fogantyúval)
+    col.addEventListener('dragover',ev=>{ if(!dragJobId||dragJobId===job.id) return; ev.preventDefault(); ev.dataTransfer.dropEffect='move'; const before=isBeforeHalf(ev,col); clearColDropHints(); col.classList.add(before?'col-drop-before':'col-drop-after'); });
+    col.addEventListener('dragleave',ev=>{ if(!dragJobId) return; if(!col.contains(ev.relatedTarget)) col.classList.remove('col-drop-before','col-drop-after'); });
+    col.addEventListener('drop',ev=>{ if(!dragJobId||dragJobId===job.id){ return; } ev.preventDefault(); const before=isBeforeHalf(ev,col); reorderJobs(dragJobId,job.id,before); dragJobId=null; clearColDropHints(); });
     col.appendChild(hdr); col.appendChild(noteBox); col.appendChild(dz);
     board.appendChild(col);
-    if(hasNote) noteBox.style.display='block';
+    if(hasNote){ noteBox.style.display='block'; autoGrowNote(ta); }
   });
 }
 function toggleNote(jid,col){
   const nb=col.querySelector('[data-notefor="'+jid+'"]');
   if(!nb) return;
   nb.style.display=nb.style.display==='none'?'block':'none';
-  if(nb.style.display==='block') nb.querySelector('textarea').focus();
+  if(nb.style.display==='block'){ const ta=nb.querySelector('textarea'); autoGrowNote(ta); ta.focus(); }
+}
+function autoGrowNote(ta){
+  if(!ta) return;
+  ta.style.height='auto';
+  ta.style.height=Math.min(Math.max(ta.scrollHeight,80),400)+'px';
+}
+function isBeforeHalf(ev,col){
+  const r=col.getBoundingClientRect();
+  return (ev.clientX-r.left) < r.width/2;
+}
+function clearColDropHints(){
+  document.querySelectorAll('.col-drop-before,.col-drop-after').forEach(c=>c.classList.remove('col-drop-before','col-drop-after'));
+}
+function reorderJobs(fromId,toId,before){
+  if(fromId===toId) return;
+  const jobs=dayData.jobs||[];
+  const fromIdx=jobs.findIndex(j=>j.id===fromId);
+  if(fromIdx<0) return;
+  const [moved]=jobs.splice(fromIdx,1);
+  let toIdx=jobs.findIndex(j=>j.id===toId);
+  if(toIdx<0){ jobs.splice(fromIdx,0,moved); return; }
+  jobs.splice(before?toIdx:toIdx+1,0,moved);
+  scheduleSave();
 }
 function deleteExtCard(cid,type){
   if(type==='ext-person') dayData.extPersons=(dayData.extPersons||[]).filter(c=>c.id!==cid);
